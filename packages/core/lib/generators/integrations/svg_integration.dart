@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter_gen_core/generators/integrations/integration.dart';
 import 'package:flutter_gen_core/settings/asset_type.dart';
+import 'package:vector_graphics_compiler/vector_graphics_compiler.dart';
 
 class SvgIntegration extends Integration {
-  SvgIntegration(String packageParameterLiteral)
+  SvgIntegration(String packageParameterLiteral, {this.parseMetadata = false})
       : super(packageParameterLiteral);
+
+  final bool parseMetadata;
 
   String get packageExpression => packageParameterLiteral.isNotEmpty
       ? ' = \'$packageParameterLiteral\''
@@ -19,9 +24,10 @@ class SvgIntegration extends Integration {
   String get classOutput => _classDefinition;
 
   String get _classDefinition => '''class SvgGenImage {
-  const SvgGenImage(this._assetName);
+  const SvgGenImage(this._assetName, {this.size = null});
 
   final String _assetName;
+  final Size? size;
 
   SvgPicture svg({
     Key? key,
