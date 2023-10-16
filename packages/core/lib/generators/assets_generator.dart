@@ -186,9 +186,15 @@ String generateAssets(
   return formatter.format(buffer.toString());
 }
 
+/// Returns a list of all releative path assets that are to be considered.
 List<String> _getAssetRelativePathList(
+  /// The absolute root path of the assets directory.
   String rootPath,
+
+  /// List of assets as provided the `flutter`.`assets` section in the pubspec.yaml.
   List<String> assets,
+
+  /// List of globs as provided the `flutter_gen`.`assets`.`exclude` section in the pubspec.yaml.
   List<Glob> excludes,
 ) {
   final assetRelativePathList = <String>[];
@@ -243,14 +249,13 @@ _Statement? _createAssetTypeStatement(
   AssetsGenConfig config,
   AssetType assetType,
   List<Integration> integrations,
-  String name,
 ) {
   final childAssetAbsolutePath = join(config.rootPath, assetType.path);
   if (assetType.isSupportedImage) {
     return _Statement(
       type: 'AssetGenImage',
       filePath: assetType.path,
-      name: name,
+      name: assetType.name,
       value: 'AssetGenImage(\'${posixStyle(assetType.path)}\')',
       isConstConstructor: true,
       isDirectory: false,
@@ -261,7 +266,7 @@ _Statement? _createAssetTypeStatement(
     return _Statement(
       type: childClassName,
       filePath: assetType.path,
-      name: name,
+      name: assetType.name,
       value: '$childClassName()',
       isConstConstructor: true,
       isDirectory: true,
@@ -279,7 +284,7 @@ _Statement? _createAssetTypeStatement(
       return _Statement(
         type: 'String',
         filePath: assetType.path,
-        name: name,
+        name: assetType.name,
         value: '\'$assetKey\'',
         isConstConstructor: false,
         isDirectory: false,
@@ -290,7 +295,7 @@ _Statement? _createAssetTypeStatement(
       return _Statement(
         type: integration.className,
         filePath: assetType.path,
-        name: name,
+        name: assetType.name,
         value: integration.classInstantiate(posixStyle(assetType.path)),
         isConstConstructor: integration.isConstConstructor,
         isDirectory: false,
@@ -328,12 +333,8 @@ String _dotDelimiterStyleDefinition(
           .map(
             (e) => _createAssetTypeStatement(
               config,
-              e.assetType,
+              e,
               integrations,
-              (e.isUniqueWithoutExtension
-                      ? basenameWithoutExtension(e.assetType.path)
-                      : basename(e.assetType.path))
-                  .camelCase(),
             ),
           )
           .whereType<_Statement>()
@@ -375,12 +376,18 @@ String _camelCaseStyleDefinition(
   return _flatStyleDefinition(
     config,
     integrations,
-    (e) => (e.isUniqueWithoutExtension
-            ? withoutExtension(e.assetType.path)
-            : e.assetType.path)
-        .replaceFirst(RegExp(r'asset(s)?'), '')
-        .camelCase(),
+    _camelCaseStyleName,
   );
+}
+
+String _camelCaseStyleName(AssetTypeIsUniqueWithoutExtension e) {
+  return (e.isUniqueWithoutExtension
+          ? withoutExtension(e.assetType.path)
+          : e.assetType.path)
+
+      // Omit root directory from the name if it is either assets or asset.
+      .replaceFirst(RegExp(r'asset(s)?'), '')
+      .camelCase();
 }
 
 /// Generate style like Assets.foo_bar
@@ -391,12 +398,18 @@ String _snakeCaseStyleDefinition(
   return _flatStyleDefinition(
     config,
     integrations,
-    (e) => (e.isUniqueWithoutExtension
-            ? withoutExtension(e.assetType.path)
-            : e.assetType.path)
-        .replaceFirst(RegExp(r'asset(s)?'), '')
-        .snakeCase(),
+    _snakeCaseStyleName,
   );
+}
+
+String _snakeCaseStyleName(AssetTypeIsUniqueWithoutExtension e) {
+  return (e.isUniqueWithoutExtension
+          ? withoutExtension(e.assetType.path)
+          : e.assetType.path)
+
+      // Omit root directory from the name if it is either assets or asset.
+      .replaceFirst(RegExp(r'asset(s)?'), '')
+      .snakeCase();
 }
 
 String _flatStyleDefinition(
@@ -416,7 +429,7 @@ String _flatStyleDefinition(
       .map(
         (e) => _createAssetTypeStatement(
           config,
-          e.assetType,
+          e,
           integrations,
           createName(e),
         ),
@@ -588,6 +601,8 @@ class AssetGenImage {
 ''';
 }
 
+/// The generated statement for each asset, e.g
+/// '$type get $name => ${isConstConstructor ? 'const' : ''} $value;';
 class _Statement {
   const _Statement({
     required this.type,
@@ -599,10 +614,18 @@ class _Statement {
     required this.needDartDoc,
   });
 
+  /// The type of this asset, e.g AssetGenImage, SvgGenImage, String, etc.
   final String type;
+
+  /// The relative path of this asset from the root directory.
   final String filePath;
+
+  /// The variable name of this asset.
   final String name;
+
+  /// The code to instantiate this asset. e.g `AssetGenImage('assets/image.png');`
   final String value;
+
   final bool isConstConstructor;
   final bool isDirectory;
   final bool needDartDoc;
