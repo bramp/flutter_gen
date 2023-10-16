@@ -329,7 +329,7 @@ String _dotDelimiterStyleDefinition(
 
     if (FileSystemEntity.isDirectorySync(assetAbsolutePath)) {
       final statements = assetType.children
-          .mapToIsUniqueWithoutExtension()
+          .mapToUniqueAssetType(camelCase, justBasename: true)
           .map(
             (e) => _createAssetTypeStatement(
               config,
@@ -376,18 +376,8 @@ String _camelCaseStyleDefinition(
   return _flatStyleDefinition(
     config,
     integrations,
-    _camelCaseStyleName,
+    camelCase,
   );
-}
-
-String _camelCaseStyleName(AssetTypeIsUniqueWithoutExtension e) {
-  return (e.isUniqueWithoutExtension
-          ? withoutExtension(e.assetType.path)
-          : e.assetType.path)
-
-      // Omit root directory from the name if it is either assets or asset.
-      .replaceFirst(RegExp(r'asset(s)?'), '')
-      .camelCase();
 }
 
 /// Generate style like Assets.foo_bar
@@ -398,24 +388,14 @@ String _snakeCaseStyleDefinition(
   return _flatStyleDefinition(
     config,
     integrations,
-    _snakeCaseStyleName,
+    snakeCase,
   );
-}
-
-String _snakeCaseStyleName(AssetTypeIsUniqueWithoutExtension e) {
-  return (e.isUniqueWithoutExtension
-          ? withoutExtension(e.assetType.path)
-          : e.assetType.path)
-
-      // Omit root directory from the name if it is either assets or asset.
-      .replaceFirst(RegExp(r'asset(s)?'), '')
-      .snakeCase();
 }
 
 String _flatStyleDefinition(
   AssetsGenConfig config,
   List<Integration> integrations,
-  String Function(AssetTypeIsUniqueWithoutExtension) createName,
+  String Function(String) style,
 ) {
   final statements = _getAssetRelativePathList(
     config.rootPath,
@@ -425,13 +405,12 @@ String _flatStyleDefinition(
       .distinct()
       .sorted()
       .map((assetPath) => AssetType(rootPath: config.rootPath, path: assetPath))
-      .mapToIsUniqueWithoutExtension()
+      .mapToUniqueAssetType(style)
       .map(
         (e) => _createAssetTypeStatement(
           config,
           e,
           integrations,
-          createName(e),
         ),
       )
       .whereType<_Statement>()
