@@ -97,10 +97,11 @@ class LottieIntegration extends Integration {
   String get className => 'LottieGenImage';
 
   @override
-  String classInstantiate(String path) => 'LottieGenImage(\'$path\')';
+  String classInstantiate(AssetType asset) =>
+      'LottieGenImage(\'${asset.posixStylePath}\')';
 
   @override
-  bool isSupport(AssetType type) => isLottieFile(type);
+  bool isSupport(AssetType asset) => isLottieFile(asset);
 
   @override
   bool get isConstConstructor => true;

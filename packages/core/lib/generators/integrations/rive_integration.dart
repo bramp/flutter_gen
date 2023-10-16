@@ -57,10 +57,11 @@ class RiveIntegration extends Integration {
   String get className => 'RiveGenImage';
 
   @override
-  String classInstantiate(String path) => 'RiveGenImage(\'$path\')';
+  String classInstantiate(AssetType asset) =>
+      'RiveGenImage(\'${asset.posixStylePath}\')';
 
   @override
-  bool isSupport(AssetType type) => type.extension == '.riv';
+  bool isSupport(AssetType asset) => asset.extension == '.riv';
 
   @override
   bool get isConstConstructor => true;

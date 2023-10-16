@@ -94,12 +94,13 @@ class ImageIntegration extends Integration {
   String get className => 'AssetGenImage';
 
   @override
-  String classInstantiate(String path) => 'AssetGenImage(\'$path\')';
+  String classInstantiate(AssetType asset) =>
+      'AssetGenImage(\'${asset.posixStylePath}\')';
 
   @override
-  bool isSupport(AssetType type) {
+  bool isSupport(AssetType asset) {
     /// https://api.flutter.dev/flutter/widgets/Image-class.html
-    switch (type.mime) {
+    switch (asset.mime) {
       case 'image/jpeg':
       case 'image/png':
       case 'image/gif':

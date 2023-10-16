@@ -39,6 +39,12 @@ class AssetType {
 
   String get baseName => p.basenameWithoutExtension(path);
 
+  /// Returns the full absolute path for reading the asset file.
+  String get fullPath => join(rootPath, path);
+
+  // Replace to Posix style for Windows separator.
+  String get posixStylePath => path.replaceAll(r'\', r'/');
+
   List<AssetType> get children => _children.sortedBy((e) => e.path);
 
   void addChild(AssetType type) {
